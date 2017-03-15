@@ -2,6 +2,7 @@ library(readxl)
 
 read_excel_allsheets <- function(filename) {
   sheets <- readxl::excel_sheets(filename)
+  sheets <- sheets[3:length(sheets)]
   x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X))
   names(x) <- sheets
   x
