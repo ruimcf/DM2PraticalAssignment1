@@ -38,4 +38,7 @@ convert_date_and_time <- function(df) {
 
 useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR")
 data.discretized <- data[, !names(data) %in% useless]
+data.discretized <- convert_date_and_time(data.discretized)
 data.discretized$Police_Force <- factor(data.discretized$Police_Force)
+n_vehicles.range <- c(1,2,3,4,5,Inf)
+data.discretized$Number_of_Vehicles <- discretize(data.discretized$Number_of_Vehicles, method = "fixed", categories = n_vehicles.range)
