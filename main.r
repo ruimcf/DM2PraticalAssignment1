@@ -39,7 +39,7 @@ convert_date_and_time <- function(df) {
 useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "LSOA_of_Accident_Location")
 data.discretized <- data[, !names(data) %in% useless]
 data.discretized <- convert_date_and_time(data.discretized)
-
+data.discretized[data.discretized==-1] <- NA
 # Longitude 
 data.discretized$Longitude<- discretize(data.discretized$Longitude, method = "interval", categories = 10)
 # Latitude
@@ -77,18 +77,18 @@ data.discretized$Road_Type <- factor(data.discretized$Road_Type)
 data.discretized$Speed_limit <- factor(data.discretized$Speed_limit)
 # Junction Detail
 data.discretized <- convert_codes(data.discretized, "Junction_Detail", "Junction Detail")
-data.discretized$Junction_Detail <- factor(data.discretized$Junction_Detail)
+data.discretized$Junction_Detail <- factor(data.discretized$Junction_Detail, exclude = NULL)
 # Junction Control
 data.discretized <- convert_codes(data.discretized, "Junction_Control", "Junction Control")
-data.discretized$Junction_Control <- factor(data.discretized$Junction_Control)
+data.discretized$Junction_Control <- factor(data.discretized$Junction_Control, exclude = NULL)
 # 2nd Road Class
-data.discretized <- convert_codes(data.discretized, "X1st_Road_Class", "1st Road Class")
-data.discretized$X2nd_Road_Class <- factor(data.discretized$X2nd_Road_Class)
+data.discretized <- convert_codes(data.discretized, "X2nd_Road_Class", "2nd Road Class")
+data.discretized$X2nd_Road_Class <- factor(data.discretized$X2nd_Road_Class, exclude = NULL)
 # 2nd Road Number
 data.discretized$X2nd_Road_Number <- factor(data.discretized$X2nd_Road_Number)
 # Ped Cross - Human
 data.discretized <- convert_codes(data.discretized, "Pedestrian_Crossing.Human_Control", "Ped Cross - Human")
-data.discretized$Pedestrian_Crossing.Human_Control <- factor(data.discretized$Pedestrian_Crossing.Human_Control)
+data.discretized$Pedestrian_Crossing.Human_Control <- factor(data.discretized$Pedestrian_Crossing.Human_Control, exclude = NULL)
 # Ped Cross - Physical
 data.discretized <- convert_codes(data.discretized, "Pedestrian_Crossing.Physical_Facilities", "Ped Cross - Physical")
 data.discretized$Pedestrian_Crossing.Physical_Facilities <- factor(data.discretized$Pedestrian_Crossing.Physical_Facilities)
