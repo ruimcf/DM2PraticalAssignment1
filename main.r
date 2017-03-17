@@ -1,5 +1,7 @@
 library(readxl)
 library(lubridate)
+library(arules)
+library(arulesViz)
 
 read_excel_allsheets <- function(filename) {
   sheets <- readxl::excel_sheets(filename)
@@ -14,7 +16,7 @@ data <- read.csv(file="Accidents_2015.csv", header=TRUE)
   
 # Converts code values of col col_name to labels in excel_section_name
 convert_codes <- function(df, col_name, excel_section_name) {
-  df[[col_name]] <- sapply(df[[col_name]], function(i) subset(mysheets[[excel_section_name]], code == i)$label)
+  df[[col_name]] <- sapply(df[[col_name]], function(i) if(!is.na(i)) subset(mysheets[[excel_section_name]], code == i)$label else NA)
   df
 }
 
@@ -25,7 +27,7 @@ sample_with_label <- convert_codes(sample_with_label, "Police_Force", "Police Fo
 
 convert_date_and_time <- function(df) {
   df$Date <- as.Date(df$Date, "%d/%m/%Y")
-  df$Day <- day(df$Date)               
+  df$Day <- day(df$Date) 
   df$Month <- month(df$Date)
   df$Date <- NULL
   
@@ -120,4 +122,7 @@ data.discretized$Month <- discretize(data.discretized$Month, method="interval", 
 # Hour
 data.discretized$Hour <- discretize(data.discretized$Hour, method="interval", categories=4)
 # Minutes
-data.discretized$Minutes <- discretize(data.discretized$Minutes, method="interval", categories=4)
+data.discretized$Minute <- discretize(data.discretized$Minute, method="interval", categories=4)
+
+rules <- apriori(data.discretized)
+# inspect(rules)
