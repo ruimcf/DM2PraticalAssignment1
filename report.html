@@ -136,7 +136,7 @@ read_excel_allsheets &lt;- function(filename) {
 
 # Converts code values of col col_name to labels in excel_section_name
 convert_codes &lt;- function(df, col_name, excel_section_name) {
-  df[[col_name]] &lt;- sapply(df[[col_name]], function(i) subset(mysheets[[excel_section_name]], code == i)$label)
+  df[[col_name]] &lt;- sapply(df[[col_name]], function(i) if(!is.na(i)) subset(mysheets[[excel_section_name]], code == i)$label else NA)
   df
 }
 
@@ -153,12 +153,76 @@ convert_date_and_time &lt;- function(df) {
   df$Time &lt;- NULL
   df
 }</code></pre>
-<pre class="r"><code>library(lubridate)
-mysheets &lt;- read_excel_allsheets(&quot;Road-Accident-Safety-Data-Guide.xls&quot;)
+<pre class="r"><code>mysheets &lt;- read_excel_allsheets(&quot;Road-Accident-Safety-Data-Guide.xls&quot;)
 original.data &lt;- read.csv(file=&quot;Accidents_2015.csv&quot;, header=TRUE)
-useless &lt;- c(&quot;Accident_Index&quot;, &quot;Location_Easting_OSGR&quot;, &quot;Location_Northing_OSGR&quot;, &quot;Latitude&quot;, &quot;Longitude&quot;, &quot;LSOA_of_Accident_Location&quot;)
-data.discretized &lt;- original.data[, !names(data) %in% useless]
-# data.discretized &lt;- convert_date_and_time(data.discretized)</code></pre>
+useless &lt;- c(&quot;Accident_Index&quot;, &quot;Location_Easting_OSGR&quot;, &quot;Location_Northing_OSGR&quot;, &quot;Latitude&quot;, &quot;Longitude&quot;, &quot;LSOA_of_Accident_Location&quot;, &quot;Minutes&quot;)
+data.discretized &lt;- original.data[, !names(original.data) %in% useless]
+data.discretized &lt;- convert_date_and_time(data.discretized)
+data.discretized[data.discretized==-1] &lt;- NA
+head(data.discretized)</code></pre>
+<pre><code>##   Police_Force Accident_Severity Number_of_Vehicles Number_of_Casualties
+## 1            1                 3                  1                    1
+## 2            1                 3                  1                    1
+## 3            1                 3                  1                    1
+## 4            1                 3                  1                    1
+## 5            1                 2                  2                    1
+## 6            1                 3                  2                    1
+##   Day_of_Week Local_Authority_.District. Local_Authority_.Highway.
+## 1           2                         12                 E09000020
+## 2           2                         12                 E09000020
+## 3           2                         12                 E09000020
+## 4           3                         12                 E09000020
+## 5           6                         12                 E09000020
+## 6           5                         12                 E09000020
+##   X1st_Road_Class X1st_Road_Number Road_Type Speed_limit Junction_Detail
+## 1               5                0         6          30               3
+## 2               6                0         6          30               3
+## 3               4              415         6          30               2
+## 4               4              450         6          30               6
+## 5               3              315         6          30               6
+## 6               3              315         6          30               3
+##   Junction_Control X2nd_Road_Class X2nd_Road_Number
+## 1                4               6                0
+## 2                4               3             3218
+## 3                4               6                0
+## 4                4               6                0
+## 5                2               3             3220
+## 6                4               5                0
+##   Pedestrian_Crossing.Human_Control
+## 1                                 0
+## 2                                 0
+## 3                                 0
+## 4                                 0
+## 5                                 0
+## 6                                 0
+##   Pedestrian_Crossing.Physical_Facilities Light_Conditions
+## 1                                       0                4
+## 2                                       0                1
+## 3                                       1                4
+## 4                                       0                1
+## 5                                       5                1
+## 6                                       4                1
+##   Weather_Conditions Road_Surface_Conditions Special_Conditions_at_Site
+## 1                  1                       1                          0
+## 2                  1                       1                          0
+## 3                  2                       2                          0
+## 4                  1                       2                          0
+## 5                  2                       2                          0
+## 6                  1                       2                          0
+##   Carriageway_Hazards Urban_or_Rural_Area
+## 1                   0                   1
+## 2                   0                   1
+## 3                   0                   1
+## 4                   0                   1
+## 5                   0                   1
+## 6                   0                   1
+##   Did_Police_Officer_Attend_Scene_of_Accident Day Month Hour Minute
+## 1                                           1  12     1   18     45
+## 2                                           1  12     1    7     50
+## 3                                           1  12     1   18      8
+## 4                                           2  13     1    7     40
+## 5                                           2   9     1    7     30
+## 6                                           1  15     1    9     56</code></pre>
 <div id="data-pre-processing" class="section level2">
 <h2>Data pre processing</h2>
 <p>After analising the data, we found some attributes that will be irrelevant to our task. Those are:</p>
@@ -166,7 +230,7 @@ data.discretized &lt;- original.data[, !names(data) %in% useless]
 <li>Accident Index: Each number is unique to each accident so it doesn’t contribute to any meaningful rules.</li>
 <li>Location Easting OSRG, Location Northing OSGR, Longitude, Latitude: all these attributes represent information about the local of the accident. We chose LSOA (Lower Layer Super Output Area) as the attribute representative of space. This will also help to group accidents in the same area together.</li>
 </ul>
-<p>Time and date attibutes were changed. With the Date attribute, year, month and day attributes were created. With the Time attribute, hour and minute attributes were created.</p>
+<p>Time and date attibutes were changed. With the Date attribute, month and day columns were created. With the Time attribute, hour and minute attributes were created. However minutes attribute will not be taken in consideration in rule generation.</p>
 </div>
 <div id="data-discretization" class="section level2">
 <h2>Data discretization</h2>
@@ -174,13 +238,11 @@ data.discretized &lt;- original.data[, !names(data) %in% useless]
 <ul>
 <li>Number of Vehicles: 1, 2, 3, 4, 5+</li>
 <li>Number of Casualties: 1, 2, 3, 4, 5+</li>
+<li>Day: split in 4 intervals, representing the weeks of the month.</li>
+<li>Hour: Hours of the day will be split in intervals of 3 hours each, starting at midnight.</li>
 </ul>
 <pre class="r"><code># Discriteze all data 
 
-# Longitude 
-data.discretized$Longitude&lt;- discretize(data.discretized$Longitude, method = &quot;interval&quot;, categories = 10)
-# Latitude
-data.discretized$Latitude&lt;- discretize(data.discretized$Latitude, method = &quot;interval&quot;, categories = 10)
 # Police Force
 data.discretized &lt;- convert_codes(data.discretized, &quot;Police_Force&quot;, &quot;Police Force&quot;)
 data.discretized$Police_Force &lt;- factor(data.discretized$Police_Force)
@@ -210,22 +272,22 @@ data.discretized$X1st_Road_Number &lt;- factor(data.discretized$X1st_Road_Number
 # Road Type
 data.discretized &lt;- convert_codes(data.discretized, &quot;Road_Type&quot;, &quot;Road Type&quot;)
 data.discretized$Road_Type &lt;- factor(data.discretized$Road_Type)
-# Speed Limit (????)
+# Speed Limit
 data.discretized$Speed_limit &lt;- factor(data.discretized$Speed_limit)
 # Junction Detail
 data.discretized &lt;- convert_codes(data.discretized, &quot;Junction_Detail&quot;, &quot;Junction Detail&quot;)
-data.discretized$Junction_Detail &lt;- factor(data.discretized$Junction_Detail)
+data.discretized$Junction_Detail &lt;- factor(data.discretized$Junction_Detail, exclude = NULL)
 # Junction Control
 data.discretized &lt;- convert_codes(data.discretized, &quot;Junction_Control&quot;, &quot;Junction Control&quot;)
-data.discretized$Junction_Control &lt;- factor(data.discretized$Junction_Control)
+data.discretized$Junction_Control &lt;- factor(data.discretized$Junction_Control, exclude = NULL)
 # 2nd Road Class
-data.discretized &lt;- convert_codes(data.discretized, &quot;X1st_Road_Class&quot;, &quot;1st Road Class&quot;)
-data.discretized$X2nd_Road_Class &lt;- factor(data.discretized$X2nd_Road_Class)
+data.discretized &lt;- convert_codes(data.discretized, &quot;X2nd_Road_Class&quot;, &quot;2nd Road Class&quot;)
+data.discretized$X2nd_Road_Class &lt;- factor(data.discretized$X2nd_Road_Class, exclude = NULL)
 # 2nd Road Number
 data.discretized$X2nd_Road_Number &lt;- factor(data.discretized$X2nd_Road_Number)
 # Ped Cross - Human
 data.discretized &lt;- convert_codes(data.discretized, &quot;Pedestrian_Crossing.Human_Control&quot;, &quot;Ped Cross - Human&quot;)
-data.discretized$Pedestrian_Crossing.Human_Control &lt;- factor(data.discretized$Pedestrian_Crossing.Human_Control)
+data.discretized$Pedestrian_Crossing.Human_Control &lt;- factor(data.discretized$Pedestrian_Crossing.Human_Control, exclude = NULL)
 # Ped Cross - Physical
 data.discretized &lt;- convert_codes(data.discretized, &quot;Pedestrian_Crossing.Physical_Facilities&quot;, &quot;Ped Cross - Physical&quot;)
 data.discretized$Pedestrian_Crossing.Physical_Facilities &lt;- factor(data.discretized$Pedestrian_Crossing.Physical_Facilities)
@@ -249,15 +311,14 @@ data.discretized &lt;- convert_codes(data.discretized, &quot;Urban_or_Rural_Area
 data.discretized$Urban_or_Rural_Area &lt;- factor(data.discretized$Urban_or_Rural_Area)
 # Police Officer Attend
 data.discretized &lt;- convert_codes(data.discretized, &quot;Did_Police_Officer_Attend_Scene_of_Accident&quot;, &quot;Police Officer Attend&quot;)
-data.discretized$Did_Police_Officer_Attend_Scene_of_Accident &lt;- factor(data.discretized[[Did_Police_Officer_Attend_Scene_of_Accident]])
+data.discretized$Did_Police_Officer_Attend_Scene_of_Accident &lt;- factor(data.discretized$Did_Police_Officer_Attend_Scene_of_Accident)
 # Day
 data.discretized$Day &lt;- discretize(data.discretized$Day, method=&quot;interval&quot;, categories=4)
-# Month
-data.discretized$Month &lt;- discretize(data.discretized$Month, method=&quot;interval&quot;, categories=4)
 # Hour
-data.discretized$Hour &lt;- discretize(data.discretized$Hour, method=&quot;interval&quot;, categories=4)
-# Minutes
-data.discretized$Minutes &lt;- discretize(data.discretized$Minutes, method=&quot;interval&quot;, categories=4)</code></pre>
+hour.range &lt;- c(3,6,9,12,15,18,21,Inf)
+data.discretized$Hour &lt;- discretize(data.discretized$Hour, method=&quot;fixed&quot;, categories=hour.range)
+
+head(data.discretized)</code></pre>
 </div>
 
 
