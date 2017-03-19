@@ -141,7 +141,9 @@ read_excel_allsheets &lt;- function(filename) {
 convert_codes &lt;- function(df, col_name, excel_section_name) {
   df[[col_name]] &lt;- sapply(df[[col_name]], function(i) if(!is.na(i)) subset(mysheets[[excel_section_name]], code == i)$label else NA)
   df
-}</code></pre>
+}
+
+mysheets &lt;- read_excel_allsheets(&quot;Road-Accident-Safety-Data-Guide.xls&quot;)</code></pre>
 <p>After analising the data, we found some attributes that will be irrelevant to our task. Those are:</p>
 <ul>
 <li>Accident Index: Each number is unique to each accident so it doesn’t contribute to any meaningful rules.</li>
@@ -152,8 +154,6 @@ convert_codes &lt;- function(df, col_name, excel_section_name) {
 <li>Did Police Officer Attend Scene of Accident: We think is irrelevant to the problem.</li>
 <li>Juncion Control: 40% of the data is missing</li>
 </ul>
-<pre class="r"><code>useless &lt;- c(&quot;Accident_Index&quot;, &quot;Location_Easting_OSGR&quot;, &quot;Location_Northing_OSGR&quot;, &quot;Latitude&quot;, &quot;Longitude&quot;, &quot;LSOA_of_Accident_Location&quot;, &quot;Local_Authority_.District.&quot;, &quot;Local_Authority_.Highway.&quot;, &quot;Carriageway_Hazards&quot;, &quot;Pedestrian_Crossing.Human_Control&quot;, &quot;Special_Conditions_at_Site&quot;, &quot;Did_Police_Officer_Attend_Scene_of_Accident&quot;,&quot;X2nd_Road_Number&quot;, &quot;X2nd_Road_Class&quot;, &quot;X1st_Road_Class&quot;, &quot;X1st_Road_Number&quot;, &quot;Junction_Control&quot;)
-data.discretized &lt;- original.data[, !names(original.data) %in% useless]</code></pre>
 <p>We decided to convert the date attribute into two separate columns (Day and Month), and to remove the minutes from the time, because we think it’s not important to rule generation</p>
 <pre class="r"><code># Converts date and time content into separated columns
 convert_date_and_time &lt;- function(df) {
@@ -175,13 +175,18 @@ data.discretized &lt;- convert_date_and_time(data.discretized)</code></pre>
 <h2>Data discretization</h2>
 <p>To effectively generate rules the data needs to be discretized</p>
 <ul>
-<li>Number of Vehicles: 1, 2, 3, 4, 5+</li>
-<li>Number of Casualties: 1, 2, 3, 4, 5+</li>
+<li>Number of Vehicles: 1, 2, 3, 5+</li>
+<li>Number of Casualties: 1, 2, 3, 5+</li>
 <li>Day: split in 4 intervals, representing the weeks of the month.</li>
 <li>Hour: Hours of the day will be split in intervals of 3 hours each, starting at midnight.</li>
 </ul>
 <pre class="r"><code># Discriteze all data 
 
+
+# Longitude 
+data.discretized$Longitude&lt;- discretize(data.discretized$Longitude, method = &quot;interval&quot;, categories = 10)
+# Latitude
+data.discretized$Latitude&lt;- discretize(data.discretized$Latitude, method = &quot;interval&quot;, categories = 10)
 # Police Force
 data.discretized &lt;- convert_codes(data.discretized, &quot;Police_Force&quot;, &quot;Police Force&quot;)
 data.discretized$Police_Force &lt;- factor(data.discretized$Police_Force)
@@ -189,44 +194,22 @@ data.discretized$Police_Force &lt;- factor(data.discretized$Police_Force)
 data.discretized &lt;- convert_codes(data.discretized, &quot;Accident_Severity&quot;, &quot;Accident Severity&quot;)
 data.discretized$Accident_Severity &lt;- factor(data.discretized$Accident_Severity)
 # Number of Vehicles
-n_vehicles.range &lt;- c(1,2,3,4,5,Inf)
+n_vehicles.range &lt;- c(1,2,3,5,Inf)
 data.discretized$Number_of_Vehicles &lt;- discretize(data.discretized$Number_of_Vehicles, method = &quot;fixed&quot;, categories = n_vehicles.range)
 # Number of Casualties
-n_casualties.range &lt;- c(1,2,3,4,5,Inf)
+n_casualties.range &lt;- c(1,3,5,Inf)
 data.discretized$Number_of_Casualties &lt;- discretize(data.discretized$Number_of_Casualties, method = &quot;fixed&quot;, categories = n_casualties.range)
 # Day of Week
 data.discretized &lt;- convert_codes(data.discretized, &quot;Day_of_Week&quot;, &quot;Day of Week&quot;)
 data.discretized$Day_of_Week &lt;- factor(data.discretized$Day_of_Week)
-# Local Authority District
-data.discretized &lt;- convert_codes(data.discretized, &quot;Local_Authority_.District.&quot;, &quot;Local Authority (District)&quot;)
-data.discretized$Local_Authority_.District. &lt;- factor(data.discretized$Local_Authority_.District.)
-# Local Authority Highway
-data.discretized &lt;- convert_codes(data.discretized, &quot;Local_Authority_.Highway.&quot;, &quot;Local Authority (Highway)&quot;)
-data.discretized$Local_Authority_.Highway. &lt;- factor(data.discretized$Local_Authority_.Highway.)
-# 1st Road Class
-data.discretized &lt;- convert_codes(data.discretized, &quot;X1st_Road_Class&quot;, &quot;1st Road Class&quot;)
-data.discretized$X1st_Road_Class &lt;- factor(data.discretized$X1st_Road_Class)
-# 1st Road Number
-data.discretized$X1st_Road_Number &lt;- factor(data.discretized$X1st_Road_Number)
 # Road Type
 data.discretized &lt;- convert_codes(data.discretized, &quot;Road_Type&quot;, &quot;Road Type&quot;)
 data.discretized$Road_Type &lt;- factor(data.discretized$Road_Type)
-# Speed Limit
+# Speed Limit (????)
 data.discretized$Speed_limit &lt;- factor(data.discretized$Speed_limit)
 # Junction Detail
 data.discretized &lt;- convert_codes(data.discretized, &quot;Junction_Detail&quot;, &quot;Junction Detail&quot;)
 data.discretized$Junction_Detail &lt;- factor(data.discretized$Junction_Detail, exclude = NULL)
-# Junction Control
-data.discretized &lt;- convert_codes(data.discretized, &quot;Junction_Control&quot;, &quot;Junction Control&quot;)
-data.discretized$Junction_Control &lt;- factor(data.discretized$Junction_Control, exclude = NULL)
-# 2nd Road Class
-data.discretized &lt;- convert_codes(data.discretized, &quot;X2nd_Road_Class&quot;, &quot;2nd Road Class&quot;)
-data.discretized$X2nd_Road_Class &lt;- factor(data.discretized$X2nd_Road_Class, exclude = NULL)
-# 2nd Road Number
-data.discretized$X2nd_Road_Number &lt;- factor(data.discretized$X2nd_Road_Number)
-# Ped Cross - Human
-data.discretized &lt;- convert_codes(data.discretized, &quot;Pedestrian_Crossing.Human_Control&quot;, &quot;Ped Cross - Human&quot;)
-data.discretized$Pedestrian_Crossing.Human_Control &lt;- factor(data.discretized$Pedestrian_Crossing.Human_Control, exclude = NULL)
 # Ped Cross - Physical
 data.discretized &lt;- convert_codes(data.discretized, &quot;Pedestrian_Crossing.Physical_Facilities&quot;, &quot;Ped Cross - Physical&quot;)
 data.discretized$Pedestrian_Crossing.Physical_Facilities &lt;- factor(data.discretized$Pedestrian_Crossing.Physical_Facilities)
@@ -239,20 +222,13 @@ data.discretized$Weather_Conditions &lt;- factor(data.discretized$Weather_Condit
 # Road Surface
 data.discretized &lt;- convert_codes(data.discretized, &quot;Road_Surface_Conditions&quot;, &quot;Road Surface&quot;)
 data.discretized$Road_Surface_Conditions &lt;- factor(data.discretized$Road_Surface_Conditions)
-# Special Conditions
-data.discretized &lt;- convert_codes(data.discretized, &quot;Special_Conditions_at_Site&quot;, &quot;Special Conditions at Site&quot;)
-data.discretized$Special_Conditions_at_Site &lt;- factor(data.discretized$Special_Conditions_at_Site)
-# Carriageway Hazards
-data.discretized &lt;- convert_codes(data.discretized, &quot;Carriageway_Hazards&quot;, &quot;Carriageway Hazards&quot;)
-data.discretized$Carriageway_Hazards &lt;- factor(data.discretized$Carriageway_Hazards)
 # Urban Rural
 data.discretized &lt;- convert_codes(data.discretized, &quot;Urban_or_Rural_Area&quot;, &quot;Urban Rural&quot;)
 data.discretized$Urban_or_Rural_Area &lt;- factor(data.discretized$Urban_or_Rural_Area)
-# Police Officer Attend
-data.discretized &lt;- convert_codes(data.discretized, &quot;Did_Police_Officer_Attend_Scene_of_Accident&quot;, &quot;Police Officer Attend&quot;)
-data.discretized$Did_Police_Officer_Attend_Scene_of_Accident &lt;- factor(data.discretized$Did_Police_Officer_Attend_Scene_of_Accident)
 # Day
 data.discretized$Day &lt;- discretize(data.discretized$Day, method=&quot;interval&quot;, categories=4)
+# Month
+data.discretized$Month &lt;- factor(data.discretized$Month)
 # Hour
 hour.range &lt;- c(3,6,9,12,15,18,21,Inf)
 data.discretized$Hour &lt;- discretize(data.discretized$Hour, method=&quot;fixed&quot;, categories=hour.range)</code></pre>
@@ -265,6 +241,12 @@ data.discretized$Hour &lt;- discretize(data.discretized$Hour, method=&quot;fixed
 <p class="caption">Frequent Items considering support of 20%</p>
 </div>
 <p>We can see that most accidents happen between 15h and 18h, and that the number of accidents is well distributed in each quarter of the month. There’s more accidents in a urban area than in a rural, but they are both frequent. It’s also frequent to have accidents in a dry or a wet condition but there’s more in a dry condition.</p>
+<div id="lift" class="section level4">
+<h4>Lift</h4>
+<pre class="r"><code>rules &lt;- subset(apriori(data.discretized, parameter = list(maxtime = 0, support = 0.1)), lift &gt; 2.5)</code></pre>
+<pre class="r"><code>inspect(rules)</code></pre>
+<p>Selecting the rules with an high lift value (&gt;2.5) we got this rules which tells us that the items in each rule are highly dependent. We can see that road being wet or damp is highly dependendant that it’s raining, which agrees with our assumptions. We also can see that being in a rural area depends if the speed limit of the road is 60, the road is single carriageway and that there is no physical crossing facilities within 50 meters.</p>
+</div>
 </div>
 
 

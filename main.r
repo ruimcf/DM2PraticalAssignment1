@@ -53,10 +53,10 @@ data.discretized$Police_Force <- factor(data.discretized$Police_Force)
 data.discretized <- convert_codes(data.discretized, "Accident_Severity", "Accident Severity")
 data.discretized$Accident_Severity <- factor(data.discretized$Accident_Severity)
 # Number of Vehicles
-n_vehicles.range <- c(1,2,3,4,5,Inf)
+n_vehicles.range <- c(1,2,3,5,Inf)
 data.discretized$Number_of_Vehicles <- discretize(data.discretized$Number_of_Vehicles, method = "fixed", categories = n_vehicles.range)
 # Number of Casualties
-n_casualties.range <- c(1,2,3,4,5,Inf)
+n_casualties.range <- c(1,2,3,5,Inf)
 data.discretized$Number_of_Casualties <- discretize(data.discretized$Number_of_Casualties, method = "fixed", categories = n_casualties.range)
 # Day of Week
 data.discretized <- convert_codes(data.discretized, "Day_of_Week", "Day of Week")
