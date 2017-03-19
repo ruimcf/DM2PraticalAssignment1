@@ -3,8 +3,9 @@ title: "DM2 Pratical Assigment 1"
 author: "Pedro Belem, Rui Fonseca"
 date: "18 March 2017"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -84,8 +85,8 @@ data.discretized[data.discretized==-1] <- NA
 
 To effectively generate rules the data needs to be discretized
 
-* Number of Vehicles: 1, 2, 3, 4, 5+
-* Number of Casualties: 1, 2, 3, 4, 5+
+* Number of Vehicles: 1, 2, 3, 5+
+* Number of Casualties: 1, 2, 3, 5+
 * Day: split in 4 intervals, representing the weeks of the month.
 * Hour: Hours of the day will be split in intervals of 3 hours each, starting at midnight.
 
@@ -102,44 +103,22 @@ data.discretized$Police_Force <- factor(data.discretized$Police_Force)
 data.discretized <- convert_codes(data.discretized, "Accident_Severity", "Accident Severity")
 data.discretized$Accident_Severity <- factor(data.discretized$Accident_Severity)
 # Number of Vehicles
-n_vehicles.range <- c(1,2,3,4,5,Inf)
+n_vehicles.range <- c(1,2,3,5,Inf)
 data.discretized$Number_of_Vehicles <- discretize(data.discretized$Number_of_Vehicles, method = "fixed", categories = n_vehicles.range)
 # Number of Casualties
-n_casualties.range <- c(1,2,3,4,5,Inf)
+n_casualties.range <- c(1,3,5,Inf)
 data.discretized$Number_of_Casualties <- discretize(data.discretized$Number_of_Casualties, method = "fixed", categories = n_casualties.range)
 # Day of Week
 data.discretized <- convert_codes(data.discretized, "Day_of_Week", "Day of Week")
 data.discretized$Day_of_Week <- factor(data.discretized$Day_of_Week)
-# Local Authority District
-data.discretized <- convert_codes(data.discretized, "Local_Authority_.District.", "Local Authority (District)")
-data.discretized$Local_Authority_.District. <- factor(data.discretized$Local_Authority_.District.)
-# Local Authority Highway
-data.discretized <- convert_codes(data.discretized, "Local_Authority_.Highway.", "Local Authority (Highway)")
-data.discretized$Local_Authority_.Highway. <- factor(data.discretized$Local_Authority_.Highway.)
-# 1st Road Class
-data.discretized <- convert_codes(data.discretized, "X1st_Road_Class", "1st Road Class")
-data.discretized$X1st_Road_Class <- factor(data.discretized$X1st_Road_Class)
-# 1st Road Number
-data.discretized$X1st_Road_Number <- factor(data.discretized$X1st_Road_Number)
 # Road Type
 data.discretized <- convert_codes(data.discretized, "Road_Type", "Road Type")
 data.discretized$Road_Type <- factor(data.discretized$Road_Type)
-# Speed Limit
+# Speed Limit (????)
 data.discretized$Speed_limit <- factor(data.discretized$Speed_limit)
 # Junction Detail
 data.discretized <- convert_codes(data.discretized, "Junction_Detail", "Junction Detail")
 data.discretized$Junction_Detail <- factor(data.discretized$Junction_Detail, exclude = NULL)
-# Junction Control
-data.discretized <- convert_codes(data.discretized, "Junction_Control", "Junction Control")
-data.discretized$Junction_Control <- factor(data.discretized$Junction_Control, exclude = NULL)
-# 2nd Road Class
-data.discretized <- convert_codes(data.discretized, "X2nd_Road_Class", "2nd Road Class")
-data.discretized$X2nd_Road_Class <- factor(data.discretized$X2nd_Road_Class, exclude = NULL)
-# 2nd Road Number
-data.discretized$X2nd_Road_Number <- factor(data.discretized$X2nd_Road_Number)
-# Ped Cross - Human
-data.discretized <- convert_codes(data.discretized, "Pedestrian_Crossing.Human_Control", "Ped Cross - Human")
-data.discretized$Pedestrian_Crossing.Human_Control <- factor(data.discretized$Pedestrian_Crossing.Human_Control, exclude = NULL)
 # Ped Cross - Physical
 data.discretized <- convert_codes(data.discretized, "Pedestrian_Crossing.Physical_Facilities", "Ped Cross - Physical")
 data.discretized$Pedestrian_Crossing.Physical_Facilities <- factor(data.discretized$Pedestrian_Crossing.Physical_Facilities)
@@ -152,23 +131,17 @@ data.discretized$Weather_Conditions <- factor(data.discretized$Weather_Condition
 # Road Surface
 data.discretized <- convert_codes(data.discretized, "Road_Surface_Conditions", "Road Surface")
 data.discretized$Road_Surface_Conditions <- factor(data.discretized$Road_Surface_Conditions)
-# Special Conditions
-data.discretized <- convert_codes(data.discretized, "Special_Conditions_at_Site", "Special Conditions at Site")
-data.discretized$Special_Conditions_at_Site <- factor(data.discretized$Special_Conditions_at_Site)
-# Carriageway Hazards
-data.discretized <- convert_codes(data.discretized, "Carriageway_Hazards", "Carriageway Hazards")
-data.discretized$Carriageway_Hazards <- factor(data.discretized$Carriageway_Hazards)
 # Urban Rural
 data.discretized <- convert_codes(data.discretized, "Urban_or_Rural_Area", "Urban Rural")
 data.discretized$Urban_or_Rural_Area <- factor(data.discretized$Urban_or_Rural_Area)
-# Police Officer Attend
-data.discretized <- convert_codes(data.discretized, "Did_Police_Officer_Attend_Scene_of_Accident", "Police Officer Attend")
-data.discretized$Did_Police_Officer_Attend_Scene_of_Accident <- factor(data.discretized$Did_Police_Officer_Attend_Scene_of_Accident)
 # Day
 data.discretized$Day <- discretize(data.discretized$Day, method="interval", categories=4)
+# Month
+data.discretized$Month <- factor(data.discretized$Month)
 # Hour
 hour.range <- c(3,6,9,12,15,18,21,Inf)
 data.discretized$Hour <- discretize(data.discretized$Hour, method="fixed", categories=hour.range)
+
 ```
 
 ## Data Analysis
@@ -180,3 +153,14 @@ itemFrequencyPlot(as(data.discretized, "transactions"), support = 0.2, horiz = T
 ![Frequent Items considering support of 20%](./Frequent Items.png)
 
 We can see that most accidents happen between 15h and 18h, and that the number of accidents is well distributed in each quarter of the month. There's more accidents in a urban area than in a rural, but they are both frequent. It's also frequent to have accidents in a dry or a wet condition but there's more in a dry condition.
+
+#### Lift
+```{R, results = "hide"}
+rules <- subset(apriori(data.discretized, parameter = list(maxtime = 0, support = 0.1)), lift > 2.5)
+```
+```{R}
+inspect(rules)
+```
+
+Selecting the rules with an high lift value (>2.5) we got this rules which tells us that the items in each rule are highly dependent. We can see that road being wet or damp is highly dependendant that it's raining, which agrees with our assumptions.
+We also can see that being in a rural area depends if the speed limit of the road is 60, the road is single carriageway and that there is no physical crossing facilities within 50 meters.
