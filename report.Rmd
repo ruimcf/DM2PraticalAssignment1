@@ -38,6 +38,8 @@ convert_codes <- function(df, col_name, excel_section_name) {
   df[[col_name]] <- sapply(df[[col_name]], function(i) if(!is.na(i)) subset(mysheets[[excel_section_name]], code == i)$label else NA)
   df
 }
+
+mysheets <- read_excel_allsheets("Road-Accident-Safety-Data-Guide.xls")
 ```
 
 After analising the data, we found some attributes that will be irrelevant to our task.
@@ -51,9 +53,8 @@ Those are:
 * Did Police Officer Attend Scene of Accident: We think is irrelevant to the problem.
 * Juncion Control: 40% of the data is missing
 
-```{r}
-useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control")
-data.discretized <- original.data[, !names(original.data) %in% useless]
+```{r, echo=FALSE}
+data.discretized <- original.data
 ```
 
 We decided to convert the date attribute into two separate columns (Day and Month), and to remove the minutes from the time, because we think it's not important to rule generation
@@ -89,12 +90,16 @@ To effectively generate rules the data needs to be discretized
 * Day: split in 4 intervals, representing the weeks of the month.
 * Hour: Hours of the day will be split in intervals of 3 hours each, starting at midnight.
 
-```{r, echo=FALSE}
-load("./data.RData")
-```
+
+
 ```{r, eval=FALSE}
 # Discriteze all data 
 
+
+# Longitude 
+data.discretized$Longitude<- discretize(data.discretized$Longitude, method = "interval", categories = 10)
+# Latitude
+data.discretized$Latitude<- discretize(data.discretized$Latitude, method = "interval", categories = 10)
 # Police Force
 data.discretized <- convert_codes(data.discretized, "Police_Force", "Police Force")
 data.discretized$Police_Force <- factor(data.discretized$Police_Force)
@@ -166,10 +171,25 @@ data.discretized <- convert_codes(data.discretized, "Did_Police_Officer_Attend_S
 data.discretized$Did_Police_Officer_Attend_Scene_of_Accident <- factor(data.discretized$Did_Police_Officer_Attend_Scene_of_Accident)
 # Day
 data.discretized$Day <- discretize(data.discretized$Day, method="interval", categories=4)
+# Month
+data.discretized$Month <- factor(data.discretized$Month)
 # Hour
 hour.range <- c(3,6,9,12,15,18,21,Inf)
 data.discretized$Hour <- discretize(data.discretized$Hour, method="fixed", categories=hour.range)
 ```
+
+```{r, echo=FALSE}
+# load data.discretized from RData file
+load("./data.RData")
+original.data.discretized <- data.discretized
+```
+
+```{r, echo=FALSE}
+# Ignore useless variables.
+useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control")
+data.discretized <- original.data.discretized[, !names(original.data.discretized) %in% useless]
+```
+
 
 ## Data Analysis
 
