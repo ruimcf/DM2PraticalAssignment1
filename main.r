@@ -33,12 +33,11 @@ convert_date_and_time <- function(df) {
   
   df$Time <- hm(df$Time)
   df$Hour <- hour(df$Time)
-  df$Minute <- minute(df$Time)
   df$Time <- NULL
   df
 }
 
-useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Latitude", "Longitude")
+useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control")
 data.discretized <- data[, !names(data) %in% useless]
 data.discretized <- convert_date_and_time(data.discretized)
 data.discretized[data.discretized==-1] <- NA
@@ -90,8 +89,8 @@ data.discretized$X2nd_Road_Class <- factor(data.discretized$X2nd_Road_Class, exc
 # 2nd Road Number
 data.discretized$X2nd_Road_Number <- factor(data.discretized$X2nd_Road_Number)
 # Ped Cross - Human
-data.discretized <- convert_codes(data.discretized, "Pedestrian_Crossing.Human_Control", "Ped Cross - Human")
-data.discretized$Pedestrian_Crossing.Human_Control <- factor(data.discretized$Pedestrian_Crossing.Human_Control, exclude = NULL)
+#data.discretized <- convert_codes(data.discretized, "Pedestrian_Crossing.Human_Control", "Ped Cross - Human")
+#data.discretized$Pedestrian_Crossing.Human_Control <- factor(data.discretized$Pedestrian_Crossing.Human_Control, exclude = NULL)
 # Ped Cross - Physical
 data.discretized <- convert_codes(data.discretized, "Pedestrian_Crossing.Physical_Facilities", "Ped Cross - Physical")
 data.discretized$Pedestrian_Crossing.Physical_Facilities <- factor(data.discretized$Pedestrian_Crossing.Physical_Facilities)
@@ -105,25 +104,26 @@ data.discretized$Weather_Conditions <- factor(data.discretized$Weather_Condition
 data.discretized <- convert_codes(data.discretized, "Road_Surface_Conditions", "Road Surface")
 data.discretized$Road_Surface_Conditions <- factor(data.discretized$Road_Surface_Conditions)
 # Special Conditions
-data.discretized <- convert_codes(data.discretized, "Special_Conditions_at_Site", "Special Conditions at Site")
-data.discretized$Special_Conditions_at_Site <- factor(data.discretized$Special_Conditions_at_Site)
+#data.discretized <- convert_codes(data.discretized, "Special_Conditions_at_Site", "Special Conditions at Site")
+#data.discretized$Special_Conditions_at_Site <- factor(data.discretized$Special_Conditions_at_Site)
 # Carriageway Hazards
-data.discretized <- convert_codes(data.discretized, "Carriageway_Hazards", "Carriageway Hazards")
-data.discretized$Carriageway_Hazards <- factor(data.discretized$Carriageway_Hazards)
+#data.discretized <- convert_codes(data.discretized, "Carriageway_Hazards", "Carriageway Hazards")
+#data.discretized$Carriageway_Hazards <- factor(data.discretized$Carriageway_Hazards)
 # Urban Rural
 data.discretized <- convert_codes(data.discretized, "Urban_or_Rural_Area", "Urban Rural")
 data.discretized$Urban_or_Rural_Area <- factor(data.discretized$Urban_or_Rural_Area)
 # Police Officer Attend
-data.discretized <- convert_codes(data.discretized, "Did_Police_Officer_Attend_Scene_of_Accident", "Police Officer Attend")
-data.discretized$Did_Police_Officer_Attend_Scene_of_Accident <- factor(data.discretized$Did_Police_Officer_Attend_Scene_of_Accident)
+#data.discretized <- convert_codes(data.discretized, "Did_Police_Officer_Attend_Scene_of_Accident", "Police Officer Attend")
+#data.discretized$Did_Police_Officer_Attend_Scene_of_Accident <- factor(data.discretized$Did_Police_Officer_Attend_Scene_of_Accident)
 # Day
 data.discretized$Day <- discretize(data.discretized$Day, method="interval", categories=4)
 # Month
-data.discretized$Month <- discretize(data.discretized$Month, method="interval", categories=4)
+data.discretized$Month <- factor(data.discretized$Month)
 # Hour
-data.discretized$Hour <- discretize(data.discretized$Hour, method="interval", categories=4)
-# Minutes
-data.discretized$Minute <- discretize(data.discretized$Minute, method="interval", categories=4)
+hour.range <- c(3,6,9,12,15,18,21,Inf)
+data.discretized$Hour <- discretize(data.discretized$Hour, method="fixed", categories=hour.range)
+
+data.discretized <- as(data.discretized, Class = "transactions")
 
 # LSOA code to label conversion. Too Slow
 # lsoa.labels <- read.csv("LSOA_2011_EW_NC.csv")

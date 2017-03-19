@@ -47,10 +47,12 @@ Those are:
 * Location Easting OSRG, Location Northing OSGR, Longitude, Latitude: all these attributes represent information about the local of the accident. We chose LSOA (Lower Layer Super Output Area) as the attribute representative of space. This will also help to group accidents in the same area together.
 * Local Authorities !?!?
 * 1st and 2nd roads !?!?
-
+* Carriageway Hazards, Pedestrian Crossing (Human Control), Special Conditions at Site: We notice all these attributes had one class with >97% of frequency, so we decided to remove them from the data because there isn't frequent itemsets with classes different from the most frequent, if we consider a support bigger than 0.03% which we think is low.
+* Did Police Officer Attend Scene of Accident: We think is irrelevant to the problem.
+* Juncion Control: 40% of the data is missing
 
 ```{r}
-useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location")
+useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control")
 data.discretized <- original.data[, !names(original.data) %in% useless]
 ```
 
@@ -171,6 +173,10 @@ data.discretized$Hour <- discretize(data.discretized$Hour, method="fixed", categ
 
 ## Data Analysis
 
-```{R}
-inspect(subset(apriori(data.discretized, parameter = list(maxtime = 0, support = 0.3, confidence = 0.95)), lift > 2.5))
+```{R, eval = FALSE}
+itemFrequencyPlot(as(data.discretized, "transactions"), support = 0.2, horiz = TRUE)
 ```
+
+![Frequent Items considering support of 20%](./Frequent Items.png)
+
+We can see that most accidents happen between 15h and 18h, and that the number of accidents is well distributed in each quarter of the month. There's more accidents in a urban area than in a rural, but they are both frequent. It's also frequent to have accidents in a dry or a wet condition but there's more in a dry condition.
