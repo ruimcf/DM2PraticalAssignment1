@@ -1,6 +1,6 @@
 ---
 title: "DM2 Pratical Assigment 1"
-author: "Pedro Belem, Rui Fonseca"
+author: "Pedro Belem 201602876, Rui Fonseca 201602879"
 date: "18 March 2017"
 output:
   html_document: default
@@ -233,7 +233,7 @@ However, we still couldn't find any rules with high confidence. Still:
 Seem to be important factors.
 
 
-As an attempt to retrieve more meaningful information, we decided to do some changes. The aditional time and space data was removed (Day of week, day, month, hour, police force) and the rule lenght was limited to 2.
+As an attempt to retrieve more meaningful information, we decided to do some changes. The aditional time and space data was removed (Day of week, day, month, hour, police force) and the rule length was limited to 2.
 ```{r, echo=FALSE}
 useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control", "Day_of_Week", "Day", "Month", "Hour", "Police_Force")
 data.discretized <- original.data.discretized[, !names(original.data.discretized) %in% useless]
@@ -245,7 +245,6 @@ rules <- subset(apriori(data.discretized, param = list(minlen = 1, support = 0.0
 inspect(sort(rules, by="lift"))
 ```
 
-We can see that a bigger number of casualities is correlated with serious accidents. This relationship makes sense and is expected, as accidents envolving a lot of casualties need a serious motive to happen.
+We can see that increasing the number of casualities is correlated with higher confidence. This relationship makes sense and is expected, as accidents envolving a lot of casualties need a serious motive to happen.
 
-
-
+However, we still didn't find rules with high confidence.

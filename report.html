@@ -9,7 +9,7 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="Pedro Belem, Rui Fonseca" />
+<meta name="author" content="Pedro Belem 201602876, Rui Fonseca 201602879" />
 
 <meta name="date" content="2017-03-18" />
 
@@ -118,7 +118,7 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">DM2 Pratical Assigment 1</h1>
-<h4 class="author"><em>Pedro Belem, Rui Fonseca</em></h4>
+<h4 class="author"><em>Pedro Belem 201602876, Rui Fonseca 201602879</em></h4>
 <h4 class="date"><em>18 March 2017</em></h4>
 
 </div>
@@ -352,7 +352,7 @@ data.discretized$Hour &lt;- discretize(data.discretized$Hour, method=&quot;fixed
 <li>Urban_or_Rural_Area=Rural</li>
 </ul>
 <p>Seem to be important factors.</p>
-<p>As an attempt to retrieve more meaningful information, we decided to do some changes. The aditional time and space data was removed (Day of week, day, month, hour, police force) and the rule lenght was limited to 2.</p>
+<p>As an attempt to retrieve more meaningful information, we decided to do some changes. The aditional time and space data was removed (Day of week, day, month, hour, police force) and the rule length was limited to 2.</p>
 <pre class="r"><code>rules &lt;- subset(apriori(data.discretized, param = list(minlen = 1, support = 0.001, confidence = 0.1, maxlen=2)), subset = rhs %in% &quot;Accident_Severity=Serious&quot; &amp; lift &gt; 1)</code></pre>
 <pre class="r"><code>inspect(sort(rules, by=&quot;lift&quot;))</code></pre>
 <pre><code>##      lhs                                                                                                                    rhs                             support confidence     lift
@@ -380,7 +380,8 @@ data.discretized$Hour &lt;- discretize(data.discretized$Hour, method=&quot;fixed
 ## [22] {Junction_Detail=Other junction}                                                                                    =&gt; {Accident_Severity=Serious} 0.003227281  0.1456655 1.018132
 ## [23] {Weather_Conditions=Fine no high winds}                                                                             =&gt; {Accident_Severity=Serious} 0.117795739  0.1447841 1.011971
 ## [24] {Light_Conditions=Darkness - lighting unknown}                                                                      =&gt; {Accident_Severity=Serious} 0.001963500  0.1432292 1.001103</code></pre>
-<p>We can see that a bigger number of casualities is correlated with serious accidents. This relationship makes sense and is expected, as accidents envolving a lot of casualties need a serious motive to happen.</p>
+<p>We can see that increasing the number of casualities is correlated with higher confidence. This relationship makes sense and is expected, as accidents envolving a lot of casualties need a serious motive to happen.</p>
+<p>However, we still didn’t find rules with high confidence.</p>
 </div>
 </div>
 
