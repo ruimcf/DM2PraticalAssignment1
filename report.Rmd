@@ -2,7 +2,9 @@
 title: "DM2 Pratical Assigment 1"
 author: "Pedro Belem, Rui Fonseca"
 date: "18 March 2017"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,12 +13,16 @@ library(readxl)
 library(lubridate)
 library(arules)		
 library(arulesViz)
+
+original.data <- read.csv(file="Accidents_2015.csv", header=TRUE)
 ```
 
-
-
+## Data pre processing
+After reading the data from the csv file, we decided that it would be more readable if we converted all the values in the data frame to their corresponding label in the xls file, so we decided to make it dynamically.
+We loaded the xls file and made a function that receives the column name and the correspondent excel section name and it returns the nominal values instead of the numeric codes.
 
 ```{r}
+
 # Reads information from excel guide, used to label the data
 read_excel_allsheets <- function(filename) {
   sheets <- readxl::excel_sheets(filename)
@@ -32,8 +38,26 @@ convert_codes <- function(df, col_name, excel_section_name) {
   df[[col_name]] <- sapply(df[[col_name]], function(i) if(!is.na(i)) subset(mysheets[[excel_section_name]], code == i)$label else NA)
   df
 }
+```
 
-# Converts date and time content into separe columns
+After analising the data, we found some attributes that will be irrelevant to our task.
+Those are:
+
+* Accident Index: Each number is unique to each accident so it doesn't contribute to any meaningful rules.
+* Location Easting OSRG, Location Northing OSGR, Longitude, Latitude: all these attributes represent information about the local of the accident. We chose LSOA (Lower Layer Super Output Area) as the attribute representative of space. This will also help to group accidents in the same area together.
+* Local Authorities !?!?
+* 1st and 2nd roads !?!?
+
+
+```{r}
+useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location")
+data.discretized <- original.data[, !names(original.data) %in% useless]
+```
+
+We decided to convert the date attribute into two separate columns (Day and Month), and to remove the minutes from the time, because we think it's not important to rule generation
+
+```{r}
+# Converts date and time content into separated columns
 convert_date_and_time <- function(df) {
   df$Date <- as.Date(df$Date, "%d/%m/%Y")
   df$Day <- day(df$Date)               
@@ -42,36 +66,17 @@ convert_date_and_time <- function(df) {
   
   df$Time <- hm(df$Time)
   df$Hour <- hour(df$Time)
-  df$Minute <- minute(df$Time)
   df$Time <- NULL
   df
 }
+data.discretized <- convert_date_and_time(data.discretized)
 ```
 
-
+In the excel it's explained that the missing values in the data is represented with -1 so we converted them to NA
 
 ```{r}
-mysheets <- read_excel_allsheets("Road-Accident-Safety-Data-Guide.xls")
-original.data <- read.csv(file="Accidents_2015.csv", header=TRUE)
-useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Minutes")
-data.discretized <- original.data[, !names(original.data) %in% useless]
-data.discretized <- convert_date_and_time(data.discretized)
 data.discretized[data.discretized==-1] <- NA
-head(data.discretized)
-
 ```
-## Data pre processing
-After analising the data, we found some attributes that will be irrelevant to our task.
-Those are:
-
-* Accident Index: Each number is unique to each accident so it doesn't contribute to any meaningful rules.
-* Location Easting OSRG, Location Northing OSGR, Longitude, Latitude: all these attributes represent information about the local of the accident. We chose LSOA (Lower Layer Super Output Area) as the attribute representative of space. This will also help to group accidents in the same area together.
-
-
-Time and date attibutes were changed.
-With the Date attribute, month and day columns were created.
-With the Time attribute, hour and minute attributes were created. However minutes attribute will not be taken in consideration in rule generation.
-
 
 ## Data discretization
 
@@ -82,6 +87,9 @@ To effectively generate rules the data needs to be discretized
 * Day: split in 4 intervals, representing the weeks of the month.
 * Hour: Hours of the day will be split in intervals of 3 hours each, starting at midnight.
 
+```{r, echo=FALSE}
+load("./data.RData")
+```
 ```{r, eval=FALSE}
 # Discriteze all data 
 
@@ -159,6 +167,10 @@ data.discretized$Day <- discretize(data.discretized$Day, method="interval", cate
 # Hour
 hour.range <- c(3,6,9,12,15,18,21,Inf)
 data.discretized$Hour <- discretize(data.discretized$Hour, method="fixed", categories=hour.range)
+```
 
-head(data.discretized)
+## Data Analysis
+
+```{R}
+inspect(subset(apriori(data.discretized, parameter = list(maxtime = 0, support = 0.3, confidence = 0.95)), lift > 2.5))
 ```

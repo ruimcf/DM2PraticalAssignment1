@@ -38,15 +38,15 @@ convert_date_and_time <- function(df) {
   df
 }
 
-useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "LSOA_of_Accident_Location")
+useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Latitude", "Longitude")
 data.discretized <- data[, !names(data) %in% useless]
 data.discretized <- convert_date_and_time(data.discretized)
 data.discretized[data.discretized==-1] <- NA
 
 # Longitude 
-data.discretized$Longitude<- discretize(data.discretized$Longitude, method = "interval", categories = 10)
+#data.discretized$Longitude<- discretize(data.discretized$Longitude, method = "interval", categories = 10)
 # Latitude
-data.discretized$Latitude<- discretize(data.discretized$Latitude, method = "interval", categories = 10)
+#data.discretized$Latitude<- discretize(data.discretized$Latitude, method = "interval", categories = 10)
 # Police Force
 data.discretized <- convert_codes(data.discretized, "Police_Force", "Police Force")
 data.discretized$Police_Force <- factor(data.discretized$Police_Force)
@@ -63,11 +63,11 @@ data.discretized$Number_of_Casualties <- discretize(data.discretized$Number_of_C
 data.discretized <- convert_codes(data.discretized, "Day_of_Week", "Day of Week")
 data.discretized$Day_of_Week <- factor(data.discretized$Day_of_Week)
 # Local Authority District
-data.discretized <- convert_codes(data.discretized, "Local_Authority_.District.", "Local Authority (District)")
-data.discretized$Local_Authority_.District. <- factor(data.discretized$Local_Authority_.District.)
+#data.discretized <- convert_codes(data.discretized, "Local_Authority_.District.", "Local Authority (District)")
+#data.discretized$Local_Authority_.District. <- factor(data.discretized$Local_Authority_.District.)
 # Local Authority Highway
-data.discretized <- convert_codes(data.discretized, "Local_Authority_.Highway.", "Local Authority (Highway)")
-data.discretized$Local_Authority_.Highway. <- factor(data.discretized$Local_Authority_.Highway.)
+#data.discretized <- convert_codes(data.discretized, "Local_Authority_.Highway.", "Local Authority (Highway)")
+#data.discretized$Local_Authority_.Highway. <- factor(data.discretized$Local_Authority_.Highway.)
 # 1st Road Class
 data.discretized <- convert_codes(data.discretized, "X1st_Road_Class", "1st Road Class")
 data.discretized$X1st_Road_Class <- factor(data.discretized$X1st_Road_Class)
@@ -123,10 +123,11 @@ data.discretized$Month <- discretize(data.discretized$Month, method="interval", 
 # Hour
 data.discretized$Hour <- discretize(data.discretized$Hour, method="interval", categories=4)
 # Minutes
-data.discretized$Minutes <- discretize(data.discretized$Minutes, method="interval", categories=4)
+data.discretized$Minute <- discretize(data.discretized$Minute, method="interval", categories=4)
 
 # LSOA code to label conversion. Too Slow
 # lsoa.labels <- read.csv("LSOA_2011_EW_NC.csv")
 # data.discretized$LSOA_of_Accident_Location <- factor(data.discretized$LSOA_of_Accident_Location, levels=levels(lsoa.labels$code))
 # data.discretized$LSOA_of_Accident_Location <- sapply(data.discretized$LSOA_of_Accident_Location, function(i) subset(lsoa.labels, code == i)$label)
 
+inspect(subset(apriori(data.discretized, parameter = list(maxtime = 0, support = 0.3)), lift > 2.5))
