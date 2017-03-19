@@ -111,7 +111,7 @@ data.discretized$Accident_Severity <- factor(data.discretized$Accident_Severity)
 n_vehicles.range <- c(1,2,3,5,Inf)
 data.discretized$Number_of_Vehicles <- discretize(data.discretized$Number_of_Vehicles, method = "fixed", categories = n_vehicles.range)
 # Number of Casualties
-n_casualties.range <- c(1,3,5,Inf)
+n_casualties.range <- c(1,2,3,5,Inf)
 data.discretized$Number_of_Casualties <- discretize(data.discretized$Number_of_Casualties, method = "fixed", categories = n_casualties.range)
 # Day of Week
 data.discretized <- convert_codes(data.discretized, "Day_of_Week", "Day of Week")
@@ -119,7 +119,7 @@ data.discretized$Day_of_Week <- factor(data.discretized$Day_of_Week)
 # Road Type
 data.discretized <- convert_codes(data.discretized, "Road_Type", "Road Type")
 data.discretized$Road_Type <- factor(data.discretized$Road_Type)
-# Speed Limit (????)
+# Speed Limit
 data.discretized$Speed_limit <- factor(data.discretized$Speed_limit)
 # Junction Detail
 data.discretized <- convert_codes(data.discretized, "Junction_Detail", "Junction Detail")
@@ -170,15 +170,33 @@ itemFrequencyPlot(as(data.discretized, "transactions"), support = 0.2, horiz = T
 
 ![Frequent Items considering support of 20%](./Frequent Items.png)
 
-We can see that most accidents happen between 15h and 18h, and that the number of accidents is well distributed in each quarter of the month. There's more accidents in a urban area than in a rural, but they are both frequent. It's also frequent to have accidents in a dry or a wet condition but there's more in a dry condition.
+We can see that most accidents happen between 15h and 18h as this is the rush hour time, and that the number of accidents is well distributed in each quarter of the month. There's more accidents in a urban area than in a rural, but they are both frequent. It's also frequent to have accidents in a dry or a wet condition but there's more in a dry condition.
 
 #### Lift
 ```{R, results = "hide"}
-rules <- subset(apriori(data.discretized, parameter = list(maxtime = 0, support = 0.1)), lift > 2.5)
+rules <- subset(apriori(data.discretized, parameter = list(maxtime = 5, support = 0.1)), lift > 2.5)
 ```
+
+
 ```{R}
 inspect(rules)
 ```
 
 Selecting the rules with an high lift value (>2.5) we got this rules which tells us that the items in each rule are highly dependent. We can see that road being wet or damp is highly dependendant that it's raining, which agrees with our assumptions.
 We also can see that being in a rural area depends if the speed limit of the road is 60, the road is single carriageway and that there is no physical crossing facilities within 50 meters.
+
+
+
+As an attempt to retrieve meaningful attributes that accour in serious accidents, the aditional time and space data was removed (Day of week, day, month, hour, police force). The rule lenght was also limited to 2.
+```{r, echo=FALSE}
+useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control", "Day_of_Week", "Day", "Month", "Hour", "Police_Force")
+data.discretized <- original.data.discretized[, !names(original.data.discretized) %in% useless]
+```
+```{R, results = "hide"}
+rules <- subset(apriori(data.discretized, param = list(minlen = 1, support = 0.001, confidence = 0.1, maxlen=2)), subset = rhs %in% "Accident_Severity=Serious" & lift > 1)
+```
+```{R}
+inspect(sort(rules, by="lift"))
+```
+
+We can see that a bigger number of casualities is correlated with serious accidents. This relationship makes sense and is expected, as accidents envolving a lot of casualties need a serious motive to happen.

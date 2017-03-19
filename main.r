@@ -130,4 +130,7 @@ data.discretized <- as(data.discretized, Class = "transactions")
 # data.discretized$LSOA_of_Accident_Location <- factor(data.discretized$LSOA_of_Accident_Location, levels=levels(lsoa.labels$code))
 # data.discretized$LSOA_of_Accident_Location <- sapply(data.discretized$LSOA_of_Accident_Location, function(i) subset(lsoa.labels, code == i)$label)
 
-inspect(subset(apriori(data.discretized, parameter = list(maxtime = 0, support = 0.3)), lift > 2.5))
+load("data.RData")
+useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control")
+data.discretized <- data.discretized[, !names(data.discretized) %in% useless]
+inspect(subset(apriori(data.discretized, parameter = list(support = 0.3)), lift > 2.5))
