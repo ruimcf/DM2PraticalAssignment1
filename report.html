@@ -144,16 +144,6 @@ convert_codes &lt;- function(df, col_name, excel_section_name) {
 }
 
 mysheets &lt;- read_excel_allsheets(&quot;Road-Accident-Safety-Data-Guide.xls&quot;)</code></pre>
-<p>After analising the data, we found some attributes that will be irrelevant to our task. Those are:</p>
-<ul>
-<li>Accident Index: Each number is unique to each accident so it doesn’t contribute to any meaningful rules.</li>
-<li>Location Easting OSRG, Location Northing OSGR, Longitude, Latitude: all these attributes represent information about the local of the accident. We chose LSOA (Lower Layer Super Output Area) as the attribute representative of space. This will also help to group accidents in the same area together.</li>
-<li>Local Authorities !?!?</li>
-<li>1st and 2nd roads !?!?</li>
-<li>Carriageway Hazards, Pedestrian Crossing (Human Control), Special Conditions at Site: We notice all these attributes had one class with &gt;97% of frequency, so we decided to remove them from the data because there isn’t frequent itemsets with classes different from the most frequent, if we consider a support bigger than 0.03% which we think is low.</li>
-<li>Did Police Officer Attend Scene of Accident: We think is irrelevant to the problem.</li>
-<li>Juncion Control: 40% of the data is missing</li>
-</ul>
 <p>We decided to convert the date attribute into two separate columns (Day and Month), and to remove the minutes from the time, because we think it’s not important to rule generation</p>
 <pre class="r"><code># Converts date and time content into separated columns
 convert_date_and_time &lt;- function(df) {
@@ -232,6 +222,14 @@ data.discretized$Month &lt;- factor(data.discretized$Month)
 # Hour
 hour.range &lt;- c(3,6,9,12,15,18,21,Inf)
 data.discretized$Hour &lt;- discretize(data.discretized$Hour, method=&quot;fixed&quot;, categories=hour.range)</code></pre>
+<p>After analising the data, we found some attributes that will be irrelevant to our task. Those are:</p>
+<ul>
+<li>Accident Index: Each number is unique to each accident so it doesn’t contribute to any meaningful rules.</li>
+<li>Location Easting OSRG, Location Northing OSGR, Longitude, Latitude, Local Authorities: all these attributes represent information about the local of the accident. We chose LSOA (Lower Layer Super Output Area) as the attribute representative of space. This will also help to group accidents in the same area together.</li>
+<li>Carriageway Hazards, Pedestrian Crossing (Human Control), Special Conditions at Site: We notice all these attributes had one class with &gt;97% of frequency, so we decided to remove them from the data because there isn’t frequent itemsets with classes different from the most frequent, if we consider a support bigger than 0.03% which we think is low.</li>
+<li>Did Police Officer Attend Scene of Accident: We think is irrelevant to the problem.</li>
+<li>Juncion Control: 40% of the data is missing</li>
+</ul>
 </div>
 <div id="data-analysis" class="section level2">
 <h2>Data Analysis</h2>
@@ -285,6 +283,56 @@ data.discretized$Hour &lt;- discretize(data.discretized$Hour, method=&quot;fixed
 ## [23] {Weather_Conditions=Fine no high winds}                                                                             =&gt; {Accident_Severity=Serious} 0.117795739  0.1447841 1.011971
 ## [24] {Light_Conditions=Darkness - lighting unknown}                                                                      =&gt; {Accident_Severity=Serious} 0.001963500  0.1432292 1.001103</code></pre>
 <p>We can see that a bigger number of casualities is correlated with serious accidents. This relationship makes sense and is expected, as accidents envolving a lot of casualties need a serious motive to happen.</p>
+</div>
+<div id="maximally-frequent-itemsets" class="section level4">
+<h4>Maximally Frequent Itemsets</h4>
+<pre class="r"><code>max.frequent.sets &lt;- apriori(data.discretized, parameter = list(target = &quot;maximally frequent itemsets&quot;, support = 0.55), control = list(sort = -1))</code></pre>
+<pre class="r"><code>inspect(max.frequent.sets)</code></pre>
+<pre><code>##      items                                                                                        support
+## [1]  {Number_of_Vehicles=  2}                                                                   0.6041512
+## [2]  {Accident_Severity=Slight,                                                                          
+##       Number_of_Casualties=  1}                                                                 0.6645270
+## [3]  {Accident_Severity=Slight,                                                                          
+##       Road_Type=Single carriageway}                                                             0.6283986
+## [4]  {Accident_Severity=Slight,                                                                          
+##       Light_Conditions=Daylight}                                                                0.6256283
+## [5]  {Accident_Severity=Slight,                                                                          
+##       Urban_or_Rural_Area=Urban}                                                                0.5703219
+## [6]  {Accident_Severity=Slight,                                                                          
+##       Speed_limit=30}                                                                           0.5541141
+## [7]  {Number_of_Casualties=  1,                                                                          
+##       Weather_Conditions=Fine no high winds}                                                    0.6379877
+## [8]  {Road_Type=Single carriageway,                                                                      
+##       Weather_Conditions=Fine no high winds}                                                    0.6126264
+## [9]  {Number_of_Casualties=  1,                                                                          
+##       Pedestrian_Crossing.Physical_Facilities=No physical crossing facilities within 50 metres} 0.6251714
+## [10] {Road_Type=Single carriageway,                                                                      
+##       Pedestrian_Crossing.Physical_Facilities=No physical crossing facilities within 50 metres} 0.6104344
+## [11] {Pedestrian_Crossing.Physical_Facilities=No physical crossing facilities within 50 metres,          
+##       Light_Conditions=Daylight}                                                                0.5984678
+## [12] {Number_of_Casualties=  1,                                                                          
+##       Road_Type=Single carriageway}                                                             0.5928272
+## [13] {Number_of_Casualties=  1,                                                                          
+##       Light_Conditions=Daylight}                                                                0.5759268
+## [14] {Number_of_Casualties=  1,                                                                          
+##       Road_Surface_Conditions=Dry}                                                              0.5715928
+## [15] {Road_Type=Single carriageway,                                                                      
+##       Light_Conditions=Daylight}                                                                0.5531716
+## [16] {Speed_limit=30,                                                                                    
+##       Urban_or_Rural_Area=Urban}                                                                0.5587051
+## [17] {Accident_Severity=Slight,                                                                          
+##       Pedestrian_Crossing.Physical_Facilities=No physical crossing facilities within 50 metres,          
+##       Weather_Conditions=Fine no high winds}                                                    0.5508297
+## [18] {Accident_Severity=Slight,                                                                          
+##       Weather_Conditions=Fine no high winds,                                                             
+##       Road_Surface_Conditions=Dry}                                                              0.5883575
+## [19] {Pedestrian_Crossing.Physical_Facilities=No physical crossing facilities within 50 metres,          
+##       Weather_Conditions=Fine no high winds,                                                             
+##       Road_Surface_Conditions=Dry}                                                              0.5565774
+## [20] {Light_Conditions=Daylight,                                                                         
+##       Weather_Conditions=Fine no high winds,                                                             
+##       Road_Surface_Conditions=Dry}                                                              0.5531716</code></pre>
+<p>Calculating the maximally frequent itemsets, using a support of 55%, we can see that 60% of the accidents have 2 vehicles involved but there’s no other frequent itemset with 2 number of vehicles (with support of 55%). We can also see that there are many frequent sets with slight accident severity but none of those sets form a frequent superset. &gt;&gt;&gt;&gt;&gt;&gt;&gt; f0e9949573aa7e2d2d52f4afd6d4a60998a966f5</p>
 </div>
 </div>
 

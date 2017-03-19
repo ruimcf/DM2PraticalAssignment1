@@ -43,16 +43,6 @@ convert_codes <- function(df, col_name, excel_section_name) {
 mysheets <- read_excel_allsheets("Road-Accident-Safety-Data-Guide.xls")
 ```
 
-After analising the data, we found some attributes that will be irrelevant to our task.
-Those are:
-
-* Accident Index: Each number is unique to each accident so it doesn't contribute to any meaningful rules.
-* Location Easting OSRG, Location Northing OSGR, Longitude, Latitude: all these attributes represent information about the local of the accident. We chose LSOA (Lower Layer Super Output Area) as the attribute representative of space. This will also help to group accidents in the same area together.
-* Local Authorities !?!?
-* 1st and 2nd roads !?!?
-* Carriageway Hazards, Pedestrian Crossing (Human Control), Special Conditions at Site: We notice all these attributes had one class with >97% of frequency, so we decided to remove them from the data because there isn't frequent itemsets with classes different from the most frequent, if we consider a support bigger than 0.03% which we think is low.
-* Did Police Officer Attend Scene of Accident: We think is irrelevant to the problem.
-* Juncion Control: 40% of the data is missing
 
 ```{r, echo=FALSE}
 data.discretized <- original.data
@@ -155,12 +145,20 @@ load("./data.RData")
 original.data.discretized <- data.discretized
 ```
 
+After analising the data, we found some attributes that will be irrelevant to our task.
+Those are:
+
+* Accident Index: Each number is unique to each accident so it doesn't contribute to any meaningful rules.
+* Location Easting OSRG, Location Northing OSGR, Longitude, Latitude, Local Authorities: all these attributes represent information about the local of the accident. We chose LSOA (Lower Layer Super Output Area) as the attribute representative of space. This will also help to group accidents in the same area together.
+* Carriageway Hazards, Pedestrian Crossing (Human Control), Special Conditions at Site: We notice all these attributes had one class with >97% of frequency, so we decided to remove them from the data because there isn't frequent itemsets with classes different from the most frequent, if we consider a support bigger than 0.03% which we think is low.
+* Did Police Officer Attend Scene of Accident: We think is irrelevant to the problem.
+* Juncion Control: 40% of the data is missing
+
 ```{r, echo=FALSE}
 # Ignore useless variables.
 useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control")
 data.discretized <- original.data.discretized[, !names(original.data.discretized) %in% useless]
 ```
-
 
 ## Data Analysis
 
@@ -185,8 +183,6 @@ inspect(rules)
 Selecting the rules with an high lift value (>2.5) we got this rules which tells us that the items in each rule are highly dependent. We can see that road being wet or damp is highly dependendant that it's raining, which agrees with our assumptions.
 We also can see that being in a rural area depends if the speed limit of the road is 60, the road is single carriageway and that there is no physical crossing facilities within 50 meters.
 
-
-
 As an attempt to retrieve meaningful attributes that accour in serious accidents, the aditional time and space data was removed (Day of week, day, month, hour, police force). The rule lenght was also limited to 2.
 ```{r, echo=FALSE}
 useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control", "Day_of_Week", "Day", "Month", "Hour", "Police_Force")
@@ -200,3 +196,14 @@ inspect(sort(rules, by="lift"))
 ```
 
 We can see that a bigger number of casualities is correlated with serious accidents. This relationship makes sense and is expected, as accidents envolving a lot of casualties need a serious motive to happen.
+
+#### Maximally Frequent Itemsets
+```{R, results = "hide"}
+max.frequent.sets <- apriori(data.discretized, parameter = list(target = "maximally frequent itemsets", support = 0.55), control = list(sort = -1))
+```
+```{R}
+inspect(max.frequent.sets)
+```
+
+Calculating the maximally frequent itemsets, using a support of 55%, we can see that 60% of the accidents have 2 vehicles involved but there's no other frequent itemset with 2 number of vehicles (with support of 55%). 
+We can also see that there are many frequent sets with slight accident severity but none of those sets form a frequent superset.
