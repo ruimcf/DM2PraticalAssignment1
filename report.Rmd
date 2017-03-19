@@ -206,8 +206,34 @@ rules <- apriori(data.discretized, param = list(support = 0.1))
 plot(rules)
 ```
 
+### Serious Accidents
+The goal was to find rules that cause serious accidents.
+```{r, results="hide"}
+rules <- (sort(subset(apriori(data.discretized, param = list(minlen = 1, support = 0.1, confidence = 0.1)), subset = rhs %in% "Accident_Severity=Serious"), by="confidence"))
+```
+```{r}
+inspect(rules)
+```
 
-As an attempt to retrieve meaningful attributes that accour in serious accidents, the aditional time and space data was removed (Day of week, day, month, hour, police force). The rule lenght was also limited to 2.
+As there are no rules with high confidence, we decided to lower the minimum support to 0.01, since there are a lot less serious accidents.
+```{r, results="hide"}
+rules <- (sort(subset(apriori(data.discretized, param = list(minlen = 1, support = 0.01, confidence = 0.26)), subset = rhs %in% "Accident_Severity=Serious"), by="confidence"))
+```
+```{r}
+inspect(rules)
+```
+
+However, we still couldn't find any rules with high confidence. Still:
+
+* Number_of_Vehicles=1,                                
+* Road_Type=Single carriageway,     
+* Road_Surface_Conditions=Dry,
+* Urban_or_Rural_Area=Rural
+
+Seem to be important factors.
+
+
+As an attempt to retrieve more meaningful information, we decided to do some changes. The aditional time and space data was removed (Day of week, day, month, hour, police force) and the rule lenght was limited to 2.
 ```{r, echo=FALSE}
 useless <- c("Accident_Index", "Location_Easting_OSGR", "Location_Northing_OSGR", "Latitude", "Longitude", "LSOA_of_Accident_Location", "Local_Authority_.District.", "Local_Authority_.Highway.", "Carriageway_Hazards", "Pedestrian_Crossing.Human_Control", "Special_Conditions_at_Site", "Did_Police_Officer_Attend_Scene_of_Accident","X2nd_Road_Number", "X2nd_Road_Class", "X1st_Road_Class", "X1st_Road_Number", "Junction_Control", "Day_of_Week", "Day", "Month", "Hour", "Police_Force")
 data.discretized <- original.data.discretized[, !names(original.data.discretized) %in% useless]
